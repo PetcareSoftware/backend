@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Insumo
 
+
 class InsumoSerializer(serializers.ModelSerializer):
     en_alerta_stock = serializers.SerializerMethodField()
 
@@ -8,17 +9,17 @@ class InsumoSerializer(serializers.ModelSerializer):
         model = Insumo
         # Definición de la información concreta
         fields = [
-            'id', 
-            'nombre', 
-            'stock_actual', 
-            'umbral_minimo', 
-            'fecha_vencimiento', 
-            'esta_activo',
-            'en_alerta_stock'  # Metadato de control
+            "id",
+            "nombre",
+            "stock_actual",
+            "umbral_minimo",
+            "fecha_vencimiento",
+            "esta_activo",
+            "en_alerta_stock",  # Metadato de control
         ]
-        
+
         # Seguridad: El ID y el estado de alerta no deben ser modificables manualmente
-        read_only_fields = ['id', 'en_alerta_stock']
+        read_only_fields = ["id", "en_alerta_stock"]
 
     def get_en_alerta_stock(self, obj):
         """
@@ -31,7 +32,9 @@ class InsumoSerializer(serializers.ModelSerializer):
         Validación de seguridad: No permite registrar ingresos negativos.
         """
         if value < 0:
-            raise serializers.ValidationError("El stock no puede ser un número negativo.")
+            raise serializers.ValidationError(
+                "El stock no puede ser un número negativo."
+            )
         return value
 
     def validate(self, data):
