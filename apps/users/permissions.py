@@ -1,14 +1,9 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-from rest_framework import permissions
 from rest_framework.permissions import BasePermission
 
-class IsTecnicoVeterinario(permissions.BasePermission):
+class IsTecnicoVeterinario(BasePermission):
     """
     Permite acceso solo si el usuario es Admin o pertenece al grupo Tecnico_Veterinario.
     """
-
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False
@@ -46,38 +41,32 @@ class IsRecepcionista(BasePermission):
         # Verifica si alguno de los permisos del recepcionista está presente
         return any(perm in user_permissions for perm in RECEPCIONISTA_PERMISSIONS)
 
-=======
-from rest_framework import permissions
 
-class EsCliente(permissions.BasePermission):
+class EsCliente(BasePermission):
     """
     Este es tu 'guardia de seguridad'. 
     Solo dejará pasar la petición si el usuario es un Cliente.
     """
-    
     def has_permission(self, request, view):
         # 1. Primero verifica que el usuario haya iniciado sesión (que no sea anónimo)
         if not request.user or not request.user.is_authenticated:
             return False
             
         # 2. Luego verifica si pertenece al grupo de 'Cliente'
-        # (Asumiendo que los roles se manejan por grupos)
         return request.user.groups.filter(name='Cliente').exists()
->>>>>>> 114d067091390597f672b398e86b349a4422f02b
-=======
-from rest_framework import permissions
 
-class esGerente(permissions.BasePermission):
-    
-    def has_permission(self,request,viwe):
-        #verificamos que el usuario si realmente haya iniciado sesion
-        if not request.user or not request.useris_authentificated:
+
+class esGerente(BasePermission):
+    """
+    Permite acceso solo si el usuario está autenticado y tiene el rol de Gerente.
+    """
+    def has_permission(self, request, view):
+        # Verificamos que el usuario haya iniciado sesión
+        if not request.user or not request.user.is_authenticated:
             return False
-        #verificamos si tiene el rol de gerente 
-        if hasattr(request.user,'rol') and request.user.rol== 'gerente':
+            
+        # Verificamos si tiene el rol de gerente expuesto en su modelo
+        if hasattr(request.user, 'rol') and request.user.rol == 'Gerente':
             return True
-
+            
         return False
-    
-    
->>>>>>> 9c51a2513fcf2786e671f118305d1f648925711f

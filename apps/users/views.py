@@ -1,11 +1,11 @@
 from django.contrib.auth import authenticate, login
 from django.db.models import F
-from django.shortcuts import render
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from .models import Insumo
 from .serializers import InsumoSerializer
 from .permissions import IsRecepcionista, esGerente
@@ -77,7 +77,7 @@ class PanelGerenteView(APIView):
         datos_sensibles = {
             "mensaje": "Bienvenido gerente. Tienes acceso a esta informacion confidencial.",
             "usuario_actual": request.user.email,
-            "rol": request.user.rol 
+            "rol": getattr(request.user, 'rol', 'sin_rol') 
         }
         return Response(datos_sensibles, status=status.HTTP_200_OK)
     

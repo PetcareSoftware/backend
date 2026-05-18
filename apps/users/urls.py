@@ -1,23 +1,19 @@
-
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import InsumoViewSet 
-from .views import RegistroUsuarioView, LoginView, PanelGerenteView, VerificarUsuarioView
-from .views import RecepcionistaTestView
+from . import views
+
+# El router se encarga de crear las rutas automáticas para el InsumoViewSet
 router = DefaultRouter()
-router.register(r"insumos", InsumoViewSet)
+router.register(r'insumos', views.InsumoViewSet, basename='insumo')
 
 urlpatterns = [
-    path("", include(router.urls)),
-    path('test-recepcionista/', RecepcionistaTestView.as_view(), name='test-recepcionista'),
-    #ruta para registrar un usuario
-    path('register/', RegistroUsuarioView.as_view(), name='user-register'),
-    #ruta para iniciar sesion
-    path('login',LoginView.as_view(), name = 'user-login'),
-    #ruta protegida de autorizacion(solo geretes)
-    path('panel-gerente/', PanelGerenteView.as_view(), name='panel-gerente'),
-    #ruta para backend 1
-    path('me/', VerificarUsuarioView.as_view(), name='user-me'),
+    # Tus rutas de seguridad
+    path('recepcionista/', views.RecepcionistaTestView.as_view(), name='recepcionista_test'),
+    path('gerente/', views.PanelGerenteView.as_view(), name='panel_gerente'),
+    path('me/', views.VerificarUsuarioView.as_view(), name='verificar_usuario'),
+    
+    # La ruta de tu compañero
+    path('', include(router.urls)),
 ]
 
 
