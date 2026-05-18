@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 from rest_framework import permissions
 from rest_framework.permissions import BasePermission
@@ -63,3 +64,20 @@ class EsCliente(permissions.BasePermission):
         # (Asumiendo que los roles se manejan por grupos)
         return request.user.groups.filter(name='Cliente').exists()
 >>>>>>> 114d067091390597f672b398e86b349a4422f02b
+=======
+from rest_framework import permissions
+
+class esGerente(permissions.BasePermission):
+    
+    def has_permission(self,request,viwe):
+        #verificamos que el usuario si realmente haya iniciado sesion
+        if not request.user or not request.useris_authentificated:
+            return False
+        #verificamos si tiene el rol de gerente 
+        if hasattr(request.user,'rol') and request.user.rol== 'gerente':
+            return True
+
+        return False
+    
+    
+>>>>>>> 9c51a2513fcf2786e671f118305d1f648925711f
