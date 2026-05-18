@@ -48,9 +48,7 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
-
-    objects = UserManager()  
-
+    objects = UserManager()  # ← ¡Esta línea es la clave!
 
     def save(self, *args, **kwargs):
         if not self.username:
@@ -59,5 +57,3 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
-
-

@@ -15,9 +15,10 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+AUTH_USER_MODEL = 'users.User'  # Especificamos nuestro modelo de usuario personalizado
+
 # Application definition
-
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -26,9 +27,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.users',  # Agrega la aplicación de usuarios
-    'apps.owners',  # Agrega la aplicación de propietarios
-
+    'apps.users',  # Nuestra app de usuarios
+    'apps.owners',  # Nuestra app de propietarios
 ]
 
 MIDDLEWARE = [
@@ -60,8 +60,6 @@ USE_TZ = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
-AUTH_USER_MODEL = 'users.User'  # Especifica el modelo de usuario personalizado
 
 AUTH_PASSWORD_VALIDATORS = [
     {
