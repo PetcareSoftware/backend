@@ -1,10 +1,14 @@
-from rest_framework.decorators import api_view, action
-from rest_framework.response import Response
-from rest_framework import status, viewsets
 from django.contrib.auth import authenticate, login
 from django.db.models import F
+from rest_framework import status, viewsets
+from rest_framework.decorators import api_view, action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from .models import Insumo
 from .serializers import InsumoSerializer
+from .permissions import IsRecepcionista
 
 @api_view(['POST'])
 def login_veterinario(request):
@@ -52,3 +56,15 @@ class InsumoViewSet(viewsets.ModelViewSet):
             return Response({'status': 'Stock actualizado con éxito'}, status=status.HTTP_200_OK)
         except (ValueError, TypeError):
             return Response({'error': 'Cantidad no válida'}, status=status.HTTP_400_BAD_REQUEST)
+
+class RecepcionistaTestView(APIView):
+    """
+    Vista de prueba protegida: solo accesible para usuarios con permisos de recepcionista.
+    """
+    permission_classes = [IsAuthenticated, IsRecepcionista]
+
+    def get(self, request):
+        return Response({
+            "mensaje": "Acceso concedido: Eres recepcionista.",
+            "usuario": request.user.username
+        })
