@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'apps.users',  # Nuestra app de usuarios
     'apps.owners',  # Nuestra app de propietarios
+    'apps.stock',  # Nuestra app de inventario
 ]
 
 MIDDLEWARE = [
