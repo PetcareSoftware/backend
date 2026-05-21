@@ -1,7 +1,7 @@
 from rest_framework import serializers
-from apps.stock.models import Insumo  
+from apps.stock.models import MedicalSupply
 
-class InsumoSerializer(serializers.ModelSerializer):
+class MedicalSupplySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Insumo
-        fields = '__all__'  
+        model = MedicalSupply
+        fields = '__all__'
