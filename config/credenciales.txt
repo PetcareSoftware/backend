@@ -1,0 +1,5 @@
+## Este archivo es para tener registro de las credenciales de la base de datos
+## Usuario:
+## Clave:
+
+## Nota: Este archivo se genero para una prueba tipo push git
