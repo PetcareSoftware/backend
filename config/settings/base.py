@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,6 +14,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "apps.users",
+
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -64,3 +66,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# LÓGICA DE EXPIRACIÓN (Módulo de Seguridad)
+SIMPLE_JWT = {
+    # El token muere a los 30 minutos de inactividad
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    # El usuario tiene 1 día para refrescar la sesión sin volver a meter la clave
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
