@@ -24,3 +24,12 @@ class IsRecepcionista(BasePermission):
 
         # Verifica si alguno de los permisos del recepcionista está presente
         return any(perm in user_permissions for perm in RECEPCIONISTA_PERMISSIONS)
+    
+class esGerente(BasePermission):
+    """
+    Permite acceso solo si el usuario está autenticado y pertenece al grupo 'Gerente'.
+    """
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return request.user.groups.filter(name='Gerente').exists()
