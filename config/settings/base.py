@@ -24,6 +24,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Third party
+    'rest_framework',
+    
+    # Local apps (solo la que necesitas para probar)
+    # 'apps.users',      # Comentada porque no existe en esta rama
+    # 'apps.owners',     # Comentada porque no existe en esta rama
+    'apps.stock',
 ]
 
 MIDDLEWARE = [
