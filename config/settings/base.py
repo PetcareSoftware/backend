@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Application definition
 
@@ -24,6 +24,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Local Apps
+    'apps.users',
+    'apps.patients',
+    'apps.owners',
+    'apps.appointments',
+    'apps.notifications',
+    'apps.reporting',
+    'apps.stock',
+    'apps.common',
 ]
 
 MIDDLEWARE = [
@@ -41,15 +51,14 @@ ROOT_URLCONF = 'config.urls'
 MEDIA_ROOT = BASE_DIR / "media/"
 
 
+AUTH_USER_MODEL = 'users.User'
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
+LANGUAGE_CODE = 'es-ve'
+TIME_ZONE = 'America/Caracas'
 USE_I18N = True
-
 USE_TZ = True
 
 
