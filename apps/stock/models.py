@@ -1,4 +1,5 @@
 # apps/stock/models.py
+from django.conf import settings
 from django.db import models
 import uuid
 
@@ -54,17 +55,16 @@ class SupplyBatch(models.Model):
 
 class ConsultationSupply(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # consultation_id será FK a consultations (modelo de otro programador)
-    # Por ahora usamos UUIDField sin FK para evitar errores de dependencia circular
     consultation_id = models.UUIDField(help_text="ID de la consulta (debe existir en la tabla consultations)")
-    batch = models.ForeignKey(SupplyBatch, on_delete=models.CASCADE, related_name='consultation_usages')
+    batch = models.ForeignKey('SupplyBatch', on_delete=models.CASCADE, related_name='consultation_usages')
     quantity_used = models.IntegerField()
 
     class Meta:
         db_table = 'consultation_supplies'
+        unique_together = (('consultation_id', 'batch'),)   # Clave compuesta simulada
 
     def __str__(self):
-        return f"Uso en consulta {self.consultation_id} - {self.quantity_used}"
+        return f"Uso en consulta {self.consultation_id} - {self.batch.supply.name} x{self.quantity_used}"
 
 class PurchaseOrder(models.Model):
     STATUS_CHOICES = [
@@ -74,7 +74,7 @@ class PurchaseOrder(models.Model):
         ('CANCELLED', 'Cancelada'),
     ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    manager = models.ForeignKey('users.Manager', on_delete=models.SET_NULL, null=True, blank=True, related_name='purchase_orders')
+    manager = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='purchase_orders')
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase_orders')
     total_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='REQUESTED')
@@ -101,15 +101,15 @@ class PurchaseOrderItem(models.Model):
         return f"{self.supply.name} - {self.quantity_requested} unidades"
     
 class ClinicalProcedureSupply(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    clinical_procedure_id = models.UUIDField(help_text="ID del procedimiento clínico (clinical_procedures.id)")
-    supply = models.ForeignKey('Supply', on_delete=models.CASCADE, related_name='procedure_usages')
+    procedure_id = models.UUIDField(help_text="ID del procedimiento clínico (clinical_procedures.id)")
+    batch = models.ForeignKey('SupplyBatch', on_delete=models.CASCADE, related_name='procedure_usages')
     quantity_used = models.IntegerField()
 
     class Meta:
         db_table = 'clinical_procedures_supplies'
+        unique_together = (('procedure_id', 'batch'),)
         verbose_name = 'Insumo utilizado en procedimiento'
         verbose_name_plural = 'Insumos utilizados en procedimientos'
 
     def __str__(self):
-        return f"Proc {self.clinical_procedure_id} - {self.supply.name} x{self.quantity_used}"
+        return f"Proc {self.procedure_id} - {self.batch.supply.name} x{self.quantity_used}"
