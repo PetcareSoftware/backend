@@ -58,15 +58,9 @@ class EsCliente(BasePermission):
 
 class esGerente(BasePermission):
     """
-    Permite acceso solo si el usuario está autenticado y tiene el rol de Gerente.
+    Permite acceso solo si el usuario está autenticado y pertenece al grupo 'Gerente'.
     """
     def has_permission(self, request, view):
-        # Verificamos que el usuario haya iniciado sesión
         if not request.user or not request.user.is_authenticated:
             return False
-            
-        # Verificamos si tiene el rol de gerente expuesto en su modelo
-        if hasattr(request.user, 'rol') and request.user.rol == 'Gerente':
-            return True
-            
-        return False
+        return request.user.groups.filter(name='Gerente').exists()
