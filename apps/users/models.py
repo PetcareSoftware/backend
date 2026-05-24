@@ -69,15 +69,5 @@ class Veterinarian(models.Model):
     def __str__(self):
         return f"Veterinarian - {self.clinical_staff.user.email}"
 
-class Receptionist(models.Model):
-    clinical_staff = models.OneToOneField(ClinicalStaff, on_delete=models.CASCADE, related_name='receptionist')
 
-    def __str__(self):
-        return f"Receptionist - {self.clinical_staff.user.email}"
-
-class Manager(models.Model):
-    clinical_staff = models.OneToOneField(ClinicalStaff, on_delete=models.CASCADE, related_name='manager')
-
-    def __str__(self):
-        return f"Manager - {self.clinical_staff.user.email}"
 

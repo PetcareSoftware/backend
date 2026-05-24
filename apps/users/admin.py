@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Role, ClinicalStaff, Veterinarian, Receptionist, Manager
+from .models import User, Role, ClinicalStaff, Veterinarian
 
 class CustomUserAdmin(UserAdmin):
     list_display = ('email', 'first_name', 'last_name', 'is_staff', 'role')
@@ -23,5 +23,3 @@ admin.site.register(User, CustomUserAdmin)
 admin.site.register(Role)
 admin.site.register(ClinicalStaff)
 admin.site.register(Veterinarian)
-admin.site.register(Receptionist)
-admin.site.register(Manager)
