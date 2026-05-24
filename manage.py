@@ -3,6 +3,10 @@
 import os
 import sys
 
+# Add apps/ directory to sys.path so that app modules (users, owners, patients, etc.)
+# are importable directly by their short name, matching the AppConfig.name convention.
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'apps'))
+
 
 def main():
     """Run administrative tasks."""
