@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 # Importamos las vistas correctamente desde tu app users
 from apps.users import views 
+from apps.users.views import PanelLogsView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -11,4 +12,6 @@ urlpatterns = [
     path('login/veterinario/', views.login_veterinario, name='login_veterinario'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('panel-logs/', PanelLogsView.as_view(), name='panel_logs'),
 ]

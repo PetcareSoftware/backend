@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Insumo
 from django.contrib.auth import get_user_model, authenticate
+from .models import RegistroAuditoria
 import re
 class InsumoSerializer(serializers.ModelSerializer):
     en_alerta_stock = serializers.SerializerMethodField()
@@ -107,3 +108,16 @@ class InsumoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Insumo
         fields = '__all__'
+        
+class RegistroAuditoriaSerializer(serializers.ModelSerializer):
+    usuario_nombre = serializers.CharField(source='usuario.username', read_only=True, default='Sistema')
+    resumen = serializers.SerializerMethodField()
+
+    class Meta:
+        model = RegistroAuditoria
+        fields = ['id', 'usuario', 'usuario_nombre', 'accion', 'ruta', 'fecha', 'detalles', 'resumen']
+        read_only_fields = fields
+
+    def get_resumen(self, obj):
+        usuario_str = obj.usuario.username if obj.usuario else 'Anónimo'
+        return f"{obj.accion} {obj.ruta} ({usuario_str})"
