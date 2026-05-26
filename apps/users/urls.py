@@ -14,6 +14,7 @@ urlpatterns = [
     
     # La ruta de tu compañero
     path('', include(router.urls)),
+    path('logs/', views.LogEntryListView.as_view(), name='log_entry_list'),
 ]
 
 

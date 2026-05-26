@@ -1,5 +1,6 @@
 from rest_framework.permissions import BasePermission
-
+from rest_framework import permissions
+from .models import groups
 class IsTecnicoVeterinario(BasePermission):
     """
     Permite acceso solo si el usuario es Admin o pertenece al grupo Tecnico_Veterinario.
@@ -58,15 +59,50 @@ class EsCliente(BasePermission):
 
 class esGerente(BasePermission):
     """
-    Permite acceso solo si el usuario está autenticado y tiene el rol de Gerente.
+    Permite acceso solo si el usuario está autenticado y pertenece al grupo 'Gerente'.
     """
     def has_permission(self, request, view):
-        # Verificamos que el usuario haya iniciado sesión
         if not request.user or not request.user.is_authenticated:
             return False
-            
-        # Verificamos si tiene el rol de gerente expuesto en su modelo
-        if hasattr(request.user, 'rol') and request.user.rol == 'Gerente':
-            return True
-            
-        return False
+        return request.user.groups.filter(name='Gerente').exists()
+
+
+class CustomModelPermissions(permissions.BasePermission):
+    def has_permission(self, request, view):
+        
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # Verifica si el usuario tiene los permisos específicos que la vista requiere
+        return request.user.has_perms(getattr(view, "permission_required", []))
+
+class DjangoModelPermissions(permissions.DjangoModelPermissions):
+    
+    perms_map = permissions.DjangoModelPermissions.perms_map | {
+        "GET": ["%(app_label)s.view_%(model_name)s"],
+        "HEAD": ["%(app_label)s.view_%(model_name)s"],
+    }
+    
+class IsOwner(permissions.BasePermission):
+    """
+    Guardia de seguridad para los dueños del sistema.
+    """
+    def has_permission(self, request, view):
+        
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # Verifica si el usuario tiene el carnet del grupo 'owner'
+        return request.user.groups.contains(groups.owner)
+
+
+class IsReceptionist(permissions.BasePermission):
+    """
+    Guardia de seguridad para las recepcionistas.
+    """
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # Verifica si el usuario tiene el carnet del grupo 'receptionist'
+        return request.user.groups.contains(groups.receptionist)

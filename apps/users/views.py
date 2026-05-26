@@ -1,16 +1,24 @@
 from django.contrib.auth import authenticate, login
 from django.db.models import F
 from rest_framework import status, viewsets
-from rest_framework.decorators import api_view, action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, action, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Insumo
 from .serializers import InsumoSerializer
-from .permissions import IsRecepcionista, esGerente
+
+# Importamos las nuevas clases de permisos de seguridad
+from .permissions import (
+    DjangoModelPermissions,
+    CustomModelPermissions,
+    IsReceptionist,
+    IsOwner
+)
 
 @api_view(['POST'])
+@permission_classes([AllowAny]) # El login debe ser público para poder entrar
 def login_veterinario(request):
     username = request.data.get('username')
     password = request.data.get('password')
@@ -18,6 +26,7 @@ def login_veterinario(request):
     user = authenticate(request, username=username, password=password)
 
     if user is not None:
+        # Validación de pertenencia al rol mediante Grupos
         es_veterinario = user.groups.filter(name='Veterinario').exists()
 
         if es_veterinario:
@@ -41,6 +50,9 @@ class InsumoViewSet(viewsets.ModelViewSet):
     queryset = Insumo.objects.all()
     serializer_class = InsumoSerializer
     
+    # AQUÍ ESTÁ EL REQUERIMIENTO PRINCIPAL: Permiso estándar de modelo
+    permission_classes = [DjangoModelPermissions]
+    
     @action(detail=True, methods=['post'])
     def descontar(self, request, pk=None):
         insumo = self.get_object()
@@ -61,7 +73,8 @@ class RecepcionistaTestView(APIView):
     """
     Vista de prueba protegida: solo accesible para usuarios con permisos de recepcionista.
     """
-    permission_classes = [IsAuthenticated, IsRecepcionista]
+    # Utiliza la validación por roles
+    permission_classes = [IsAuthenticated, IsReceptionist]
 
     def get(self, request):
         return Response({
@@ -70,8 +83,8 @@ class RecepcionistaTestView(APIView):
         })
 
 class PanelGerenteView(APIView):
-    # Aquí damos doble seguridad, tiene que estar logueado y tiene que ser gerente 
-    permission_classes = [IsAuthenticated, esGerente]
+    # Utiliza la validación por roles
+    permission_classes = [IsAuthenticated, IsOwner]
 
     def get(self, request):
         datos_sensibles = {
@@ -82,11 +95,11 @@ class PanelGerenteView(APIView):
         return Response(datos_sensibles, status=status.HTTP_200_OK)
     
 class VerificarUsuarioView(APIView):
-    # Autorización
+    # Autorización general
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Este es el endpoint que devuelve los datos al usuario dueño del token
+        # Filtro natural: el usuario solo puede ver y devolver sus propios datos
         user = request.user
         return Response({
             "id": user.id,
