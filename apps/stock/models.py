@@ -74,7 +74,7 @@ class PurchaseOrder(models.Model):
         ('CANCELLED', 'Cancelada'),
     ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    manager = models.ForeignKey('users.Manager', on_delete=models.SET_NULL, null=True, blank=True, related_name='purchase_orders')
+    manager = models.ForeignKey('users.ClinicalStaff', on_delete=models.SET_NULL, null=True, related_name='purchase_orders')
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase_orders')
     total_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='REQUESTED')
