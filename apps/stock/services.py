@@ -1,59 +1,48 @@
-﻿from django.db import transaction
+﻿from decimal import Decimal
+from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-from apps.stock.models import MedicalSupply, SupplyBatch
+from apps.stock.models import Supply, SupplyBatch, ConsultationSupply
 
-def consume_supply_fifo(supply_id, quantity_to_deduct):
+@transaction.atomic
+def consume_supply_fifo(supply_id, quantity, consultation_id=None):
     """
-    Descuenta unidades de stock de un insumo médico aplicando lógica FIFO estricta.
-    Implementa select_for_update para evitar condiciones de carrera concurrentes.
-    Soporta el escenario CU-17.
+    Consume stock de un insumo médico utilizando el algoritmo FIFO
+    (First Expiry First Out) basado en la fecha de vencimiento.
     """
-    if quantity_to_deduct <= 0:
-        raise ValidationError({"error": "The quantity to deduct must be a positive integer."})
+    if quantity <= 0:
+        raise ValidationError("La cantidad a consumir debe ser mayor que cero.")
 
-    with transaction.atomic():
-        try:
-            supply = MedicalSupply.objects.select_for_update().get(pk=supply_id)
-        except MedicalSupply.DoesNotExist:
-            raise ValidationError({"error": f"Medical supply with ID {supply_id} does not exist."})
+    try:
+        supply = Supply.objects.select_for_update().get(id=supply_id)
+    except (Supply.DoesNotExist, ValueError):
+        raise ValidationError("Insumo no encontrado o ID inválido.")
 
-        if supply.current_stock < quantity_to_deduct:
-            raise ValidationError({
-                "error": f"Insufficient stock for {supply.supply_name}. "
-                         f"Required: {quantity_to_deduct}, Available: {supply.current_stock}"
-            })
+    batches = SupplyBatch.objects.select_for_update().filter(
+        supply=supply,
+        expiration_date__gt=timezone.now().date(),
+        current_stock__gt=0
+    ).order_by('expiration_date')
 
-        active_batches = SupplyBatch.objects.filter(
-            id_supply=supply,
-            quantity_available__gt=0,
-            expiration_date__gt=timezone.now().date()
-        ).order_by('expiration_date')
+    total_available = sum(b.current_stock for b in batches)
+    if total_available < quantity:
+        raise ValidationError(
+            f"Stock insuficiente para {supply.name}. Requerido: {quantity}, Disponible: {total_available}."
+        )
 
-        total_available = sum(b.quantity_available for b in active_batches)
+    remaining_to_consume = quantity
+    for batch in batches:
+        if remaining_to_consume <= 0:
+            break
+        take = min(batch.current_stock, remaining_to_consume)
+        batch.current_stock -= take
+        batch.save()
+        if consultation_id:
+            ConsultationSupply.objects.create(
+                consultation_id=consultation_id,
+                batch=batch,
+                quantity_used=take
+            )
+        remaining_to_consume -= take
 
-        if total_available < quantity_to_deduct:
-            raise ValidationError({
-                "error": f"Insufficient stock from non-expired batches for {supply.supply_name}. "
-                         f"Available: {total_available}."
-            })
-
-        remaining = quantity_to_deduct
-
-        for batch in active_batches:
-            if remaining <= 0:
-                break
-
-            if batch.quantity_available >= remaining:
-                batch.quantity_available -= remaining
-                batch.save()
-                remaining = 0
-            else:
-                remaining -= batch.quantity_available
-                batch.quantity_available = 0
-                batch.save()
-
-        supply.current_stock -= quantity_to_deduct
-        supply.save()
-
-        return supply
+    return supply
