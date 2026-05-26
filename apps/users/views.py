@@ -6,8 +6,8 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Insumo
-from .serializers import InsumoSerializer
+from .models import Supply, AuditLog
+from .serializers import SupplySerializer, AuditLogSerializer
 
 # Importamos las nuevas clases de permisos de seguridad
 from .permissions import (
@@ -18,93 +18,83 @@ from .permissions import (
 )
 
 @api_view(['POST'])
-@permission_classes([AllowAny]) # El login debe ser público para poder entrar
-def login_veterinario(request):
+@permission_classes([AllowAny])
+def login_veterinarian(request):
     username = request.data.get('username')
     password = request.data.get('password')
 
     user = authenticate(request, username=username, password=password)
 
     if user is not None:
-        # Validación de pertenencia al rol mediante Grupos
-        es_veterinario = user.groups.filter(name='Veterinario').exists()
-
-        if es_veterinario:
+        is_veterinarian = user.groups.filter(name='veterinarian').exists()
+        if is_veterinarian:
             login(request, user)
             return Response(
-                {"mensaje": "Bienvenido doctor, autorización exitosa"}, 
+                {"mensaje": "Bienvenido doctor, autorización exitosa"},
                 status=status.HTTP_200_OK
             )
         else:
             return Response(
-                {"error": "Acceso denegado. Esta ruta es exclusiva para personal veterinario"}, 
+                {"error": "Acceso denegado. Esta ruta es exclusiva para personal veterinario"},
                 status=status.HTTP_403_FORBIDDEN
             )
     else:
         return Response(
-            {"error": "Usuario o la contraseña son incorrectos"}, 
+            {"error": "Usuario o la contraseña son incorrectos"},
             status=status.HTTP_401_UNAUTHORIZED
         )
 
-class InsumoViewSet(viewsets.ModelViewSet):
-    queryset = Insumo.objects.all()
-    serializer_class = InsumoSerializer
-    
-    # AQUÍ ESTÁ EL REQUERIMIENTO PRINCIPAL: Permiso estándar de modelo
+class SupplyViewSet(viewsets.ModelViewSet):
+    queryset = Supply.objects.all()
+    serializer_class = SupplySerializer
     permission_classes = [DjangoModelPermissions]
     
     @action(detail=True, methods=['post'])
-    def descontar(self, request, pk=None):
-        insumo = self.get_object()
+    def deduct(self, request, pk=None):
+        supply = self.get_object()
         try:
-            cantidad_str = request.data.get('cantidad', 0)
-            cantidad = int(cantidad_str)
-            if cantidad <= 0:
-                return Response(
-                    {'error': 'La cantidad debe ser mayor a cero'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            Insumo.objects.filter(pk=pk).update(stock_actual=F('stock_actual') - cantidad)
+            quantity_str = request.data.get('quantity', 0)
+            quantity = int(quantity_str)
+            if quantity <= 0:
+                return Response({'error': 'La cantidad debe ser mayor a cero'}, status=status.HTTP_400_BAD_REQUEST)
+                
+            Supply.objects.filter(pk=pk).update(current_stock=F('current_stock') - quantity)
             return Response({'status': 'Stock actualizado con éxito'}, status=status.HTTP_200_OK)
         except (ValueError, TypeError):
             return Response({'error': 'Cantidad no válida'}, status=status.HTTP_400_BAD_REQUEST)
 
-class RecepcionistaTestView(APIView):
-    """
-    Vista de prueba protegida: solo accesible para usuarios con permisos de recepcionista.
-    """
-    # Utiliza la validación por roles
+class ReceptionistTestView(APIView):
     permission_classes = [IsAuthenticated, IsReceptionist]
-
     def get(self, request):
-        return Response({
-            "mensaje": "Acceso concedido: Eres recepcionista.",
-            "usuario": request.user.username
-        })
+        return Response({"mensaje": "Acceso concedido: Eres recepcionista.", "usuario": request.user.username})
 
-class PanelGerenteView(APIView):
-    # Utiliza la validación por roles
+class ManagerDashboardView(APIView):
     permission_classes = [IsAuthenticated, IsOwner]
-
     def get(self, request):
-        datos_sensibles = {
+        sensitive_data = {
             "mensaje": "Bienvenido gerente. Tienes acceso a esta informacion confidencial.",
             "usuario_actual": request.user.email,
-            "rol": getattr(request.user, 'rol', 'sin_rol') 
+            "rol": getattr(request.user, 'role', 'sin_rol')
         }
-        return Response(datos_sensibles, status=status.HTTP_200_OK)
+        return Response(sensitive_data, status=status.HTTP_200_OK)
     
-class VerificarUsuarioView(APIView):
-    # Autorización general
+class VerifyUserView(APIView):
     permission_classes = [IsAuthenticated]
-
     def get(self, request):
-        # Filtro natural: el usuario solo puede ver y devolver sus propios datos
         user = request.user
         return Response({
             "id": user.id,
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
-            "rol": getattr(user, 'rol', 'sin_rol')
+            "rol": getattr(user, 'role', 'sin_rol')
         })
+
+# --- CLASE AÑADIDA PARA RESOLVER EL ERROR ---
+class LogDashboardView(APIView):
+    permission_classes = [IsAuthenticated, IsOwner] # Solo el dueño/gerente debería ver logs
+
+    def get(self, request):
+        logs = AuditLog.objects.all().order_by('-timestamp')[:50]
+        serializer = AuditLogSerializer(logs, many=True)
+        return Response(serializer.data)

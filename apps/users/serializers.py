@@ -1,34 +1,36 @@
 from rest_framework import serializers
-from .models import Insumo
+from .models import Supply, AuditLog  # Modelos actualizados a inglés
 from django.contrib.auth import get_user_model, authenticate
-from .models import RegistroAuditoria
 import re
-class InsumoSerializer(serializers.ModelSerializer):
-    en_alerta_stock = serializers.SerializerMethodField()
+
+User = get_user_model()
+
+class SupplySerializer(serializers.ModelSerializer):
+    in_stock_alert = serializers.SerializerMethodField()
 
     class Meta:
-        model = Insumo
-        # Definición de la información concreta
+        model = Supply
+        # Definición de la información concreta usando los campos en inglés
         fields = [
             "id",
-            "nombre",
-            "stock_actual",
-            "umbral_minimo",
-            "fecha_vencimiento",
-            "esta_activo",
-            "en_alerta_stock",  # Metadato de control
+            "name",
+            "current_stock",
+            "minimum_threshold",
+            "expiration_date",
+            "is_active",
+            "in_stock_alert",  # Metadato de control
         ]
 
         # Seguridad: El ID y el estado de alerta no deben ser modificables manualmente
-        read_only_fields = ["id", "en_alerta_stock"]
+        read_only_fields = ["id", "in_stock_alert"]
 
-    def get_en_alerta_stock(self, obj):
+    def get_in_stock_alert(self, obj):
         """
         Lógica de monitoreo: Indica si el insumo cruzó el umbral mínimo.
         """
-        return obj.stock_actual <= obj.umbral_minimo
+        return obj.current_stock <= obj.minimum_threshold
 
-    def validate_stock_actual(self, value):
+    def validate_current_stock(self, value):
         """
         Validación de seguridad: No permite registrar ingresos negativos.
         """
@@ -45,11 +47,10 @@ class InsumoSerializer(serializers.ModelSerializer):
         """
         # Aquí podrías añadir lógica extra de seguridad de datos
         return data
-# Obtenemos el modelo de usuario que usa el proyecto
-User = get_user_model()
+
 
 # 1. VALIDACIÓN PARA REGISTRO DE USUARIO
-class RegistroUsuarioSerializer(serializers.ModelSerializer):
+class UserRegistrationSerializer(serializers.ModelSerializer):
     # Escribimos write_only=True para que la contraseña nunca se devuelva al leer datos
     password = serializers.CharField(write_only=True)
 
@@ -58,7 +59,7 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
         fields = ('email', 'password', 'first_name', 'last_name')
 
     def validate_password(self, value):
-        #Validamos las politicas de seguridad
+        # Validamos las politicas de seguridad
         if len(value) < 8:
             raise serializers.ValidationError("La contraseña debe tener al menos 8 caracteres.")
         
@@ -79,7 +80,6 @@ class RegistroUsuarioSerializer(serializers.ModelSerializer):
             last_name=validated_data.get('last_name', '')
         )
         return user
-
 
 
 # 2. VALIDACIÓN PARA INICIO DE SESIÓN (LOGIN)
@@ -103,21 +103,17 @@ class LoginSerializer(serializers.Serializer):
         # Si todo está bien, guardamos el usuario validado para usarlo después
         data['user'] = user
         return data
-    
-class InsumoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Insumo
-        fields = '__all__'
-        
-class RegistroAuditoriaSerializer(serializers.ModelSerializer):
-    usuario_nombre = serializers.CharField(source='usuario.username', read_only=True, default='Sistema')
-    resumen = serializers.SerializerMethodField()
+
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.username', read_only=True, default='Sistema')
+    summary = serializers.SerializerMethodField()
 
     class Meta:
-        model = RegistroAuditoria
-        fields = ['id', 'usuario', 'usuario_nombre', 'accion', 'ruta', 'fecha', 'detalles', 'resumen']
+        model = AuditLog
+        fields = ['id', 'user', 'user_name', 'action', 'path', 'timestamp', 'details', 'summary']
         read_only_fields = fields
 
-    def get_resumen(self, obj):
-        usuario_str = obj.usuario.username if obj.usuario else 'Anónimo'
-        return f"{obj.accion} {obj.ruta} ({usuario_str})"
+    def get_summary(self, obj):
+        usuario_str = obj.user.username if obj.user else 'Anónimo'
+        return f"{obj.action} {obj.path} ({usuario_str})"
