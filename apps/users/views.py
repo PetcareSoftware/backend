@@ -1,27 +1,24 @@
 from django.contrib.auth import authenticate, login
 from django.db.models import F
-from django.utils.dateparse import parse_datetime
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
-from django.views.generic import TemplateView
-from django.http import HttpResponseForbidden
-
-from rest_framework.pagination import PageNumberPagination
 from rest_framework import status, viewsets
-from rest_framework.decorators import api_view, action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, action, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.authentication import SessionAuthentication
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .serializers import RegistroAuditoriaSerializer
-from .models import RegistroAuditoria
 from .models import Insumo
 from .serializers import InsumoSerializer
-from .permissions import IsRecepcionista, esGerente
+
+# Importamos las nuevas clases de permisos de seguridad
+from .permissions import (
+    DjangoModelPermissions,
+    CustomModelPermissions,
+    IsReceptionist,
+    IsOwner
+)
 
 @api_view(['POST'])
+@permission_classes([AllowAny]) # El login debe ser público para poder entrar
 def login_veterinario(request):
     username = request.data.get('username')
     password = request.data.get('password')
@@ -29,6 +26,7 @@ def login_veterinario(request):
     user = authenticate(request, username=username, password=password)
 
     if user is not None:
+        # Validación de pertenencia al rol mediante Grupos
         es_veterinario = user.groups.filter(name='Veterinario').exists()
 
         if es_veterinario:
@@ -52,6 +50,9 @@ class InsumoViewSet(viewsets.ModelViewSet):
     queryset = Insumo.objects.all()
     serializer_class = InsumoSerializer
     
+    # AQUÍ ESTÁ EL REQUERIMIENTO PRINCIPAL: Permiso estándar de modelo
+    permission_classes = [DjangoModelPermissions]
+    
     @action(detail=True, methods=['post'])
     def descontar(self, request, pk=None):
         insumo = self.get_object()
@@ -72,7 +73,8 @@ class RecepcionistaTestView(APIView):
     """
     Vista de prueba protegida: solo accesible para usuarios con permisos de recepcionista.
     """
-    permission_classes = [IsAuthenticated, IsRecepcionista]
+    # Utiliza la validación por roles
+    permission_classes = [IsAuthenticated, IsReceptionist]
 
     def get(self, request):
         return Response({
@@ -81,8 +83,8 @@ class RecepcionistaTestView(APIView):
         })
 
 class PanelGerenteView(APIView):
-    # Aquí damos doble seguridad, tiene que estar logueado y tiene que ser gerente 
-    permission_classes = [IsAuthenticated, esGerente]
+    # Utiliza la validación por roles
+    permission_classes = [IsAuthenticated, IsOwner]
 
     def get(self, request):
         datos_sensibles = {
@@ -93,11 +95,11 @@ class PanelGerenteView(APIView):
         return Response(datos_sensibles, status=status.HTTP_200_OK)
     
 class VerificarUsuarioView(APIView):
-    # Autorización
+    # Autorización general
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Este es el endpoint que devuelve los datos al usuario dueño del token
+        # Filtro natural: el usuario solo puede ver y devolver sus propios datos
         user = request.user
         return Response({
             "id": user.id,
@@ -106,54 +108,3 @@ class VerificarUsuarioView(APIView):
             "last_name": user.last_name,
             "rol": getattr(user, 'rol', 'sin_rol')
         })
-        
-        
-class LogEntryPagination(PageNumberPagination):
-    page_size = 20
-    page_size_query_param = 'page_size'
-    max_page_size = 100
-
-class LogEntryListView(APIView):
-    """
-    Endpoint protegido que permite al Gerente consultar los registros de auditoría.
-    Soporta filtros por usuario, rango de fechas y tipo de acción.
-    """
-    permission_classes = [IsAuthenticated, esGerente]
-    authentication_classes = [JWTAuthentication, SessionAuthentication]
-
-    def get(self, request):
-        queryset = RegistroAuditoria.objects.select_related('usuario').all()
-
-        user_id = request.query_params.get('user_id')
-        if user_id:
-            queryset = queryset.filter(usuario_id=user_id)
-
-        desde = request.query_params.get('desde')
-        if desde:
-            desde_dt = parse_datetime(desde)
-            if desde_dt:
-                queryset = queryset.filter(fecha__gte=desde_dt)
-
-        hasta = request.query_params.get('hasta')
-        if hasta:
-            hasta_dt = parse_datetime(hasta)
-            if hasta_dt:
-                queryset = queryset.filter(fecha__lte=hasta_dt)
-
-        action = request.query_params.get('action')
-        if action:
-            queryset = queryset.filter(accion=action)
-
-        paginator = LogEntryPagination()
-        page = paginator.paginate_queryset(queryset, request, view=self)
-        serializer = RegistroAuditoriaSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
-
-@method_decorator(login_required, name='dispatch')
-class PanelLogsView(TemplateView):
-    template_name = 'panel_logs.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.groups.filter(name='Gerente').exists():
-            return HttpResponseForbidden("Acceso denegado: solo el Gerente puede ver esta página.")
-        return super().dispatch(request, *args, **kwargs)
