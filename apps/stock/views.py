@@ -1,24 +1,21 @@
-# apps/stock/views.py
+import datetime
+import uuid
+from decimal import Decimal
+from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from apps.stock.models import Supply, Supplier
+from apps.stock.models import Supply, Supplier, SupplyBatch
 from apps.stock.serializers import (
     SupplySerializer,
     SupplyWriteSerializer,
     SupplierSerializer,
 )
 
+
 class SupplyViewSet(viewsets.ModelViewSet):
     """
     ViewSet CRUD completo para el catálogo maestro de insumos.
-    Endpoints generados automáticamente:
-      GET    /api/v1/inventory/supplies/          → Listar todos los insumos
-      POST   /api/v1/inventory/supplies/          → Crear un insumo nuevo
-      GET    /api/v1/inventory/supplies/<uuid>/    → Detalle de un insumo
-      PUT    /api/v1/inventory/supplies/<uuid>/    → Actualizar un insumo
-      PATCH  /api/v1/inventory/supplies/<uuid>/    → Actualización parcial
-      DELETE /api/v1/inventory/supplies/<uuid>/    → Eliminar un insumo
     """
     queryset = Supply.objects.all()
     permission_classes = [IsAuthenticated]
@@ -31,6 +28,65 @@ class SupplyViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return SupplySerializer
         return SupplyWriteSerializer
+
+    def create(self, request, *args, **kwargs):
+        """
+        Permite registrar un insumo mapeando los datos en español provenientes de form.vue:
+        - nombre/name → name
+        - tipo/category → category (mapeado de "Medicamento"/"Insumo" a MEDICINE/CONSUMABLE)
+        - cantidad/quantity → Crea un lote de inventario inicial
+        - precio/unitCost → Costo de adquisición por unidad del lote inicial
+        - umbral/umbral → min_stock_alert
+        """
+        data = request.data
+        name = data.get('nombre') or data.get('name')
+        if not name:
+            return Response({"error": "El nombre del insumo es obligatorio."}, status=status.HTTP_400_BAD_REQUEST)
+
+        category_raw = data.get('tipo') or data.get('category')
+
+        # Mapeo de categorías español -> inglés
+        category = 'CONSUMABLE'
+        if category_raw:
+            cat_lower = category_raw.lower()
+            if 'med' in cat_lower:
+                category = 'MEDICINE'
+            elif 'vac' in cat_lower:
+                category = 'VACCINE'
+            elif 'equ' in cat_lower:
+                category = 'EQUIPMENT'
+
+        min_stock_alert = data.get('umbral') or data.get('min_stock_alert') or 10
+        sku = data.get('sku') or f"SKU-{uuid.uuid4().hex[:8].upper()}"
+        description = data.get('observaciones') or data.get('description') or ""
+
+        # Crear el insumo maestro
+        supply = Supply.objects.create(
+            sku=sku,
+            name=name,
+            description=description,
+            category=category,
+            min_stock_alert=int(min_stock_alert)
+        )
+
+        # Crear lote inicial de forma automática si se provee cantidad y precio
+        initial_qty = data.get('cantidad') or data.get('quantity')
+        price = data.get('precio') or data.get('unitCost')
+
+        if initial_qty is not None and price is not None:
+            # Limpiar valor numérico del precio si viene con signo de dólar
+            price_clean = str(price).replace('$', '').strip()
+            SupplyBatch.objects.create(
+                supply=supply,
+                lot_number=data.get('lote') or 'LOT-INITIAL',
+                expiration_date=data.get('expiration_date') or (timezone.now() + datetime.timedelta(days=365)).date(),
+                initial_stock=int(initial_qty),
+                current_stock=int(initial_qty),
+                acquisition_cost=Decimal(price_clean)
+            )
+
+        serializer = self.get_serializer(supply)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def list(self, request, *args, **kwargs):
         """
@@ -50,16 +106,10 @@ class SupplyViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+
 class SupplierViewSet(viewsets.ModelViewSet):
     """
     ViewSet CRUD completo para proveedores.
-    Endpoints generados automáticamente:
-      GET    /api/v1/inventory/suppliers/          → Listar proveedores
-      POST   /api/v1/inventory/suppliers/          → Crear proveedor
-      GET    /api/v1/inventory/suppliers/<uuid>/    → Detalle de proveedor
-      PUT    /api/v1/inventory/suppliers/<uuid>/    → Actualizar proveedor
-      PATCH  /api/v1/inventory/suppliers/<uuid>/    → Actualización parcial
-      DELETE /api/v1/inventory/suppliers/<uuid>/    → Eliminar proveedor
     """
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer

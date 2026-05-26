@@ -1,8 +1,8 @@
-# apps/stock/serializers.py
 from rest_framework import serializers
 from django.db.models import Sum
 from django.utils import timezone
 from apps.stock.models import Supply, SupplyBatch, Supplier
+
 
 class SupplierSerializer(serializers.ModelSerializer):
     """
@@ -16,6 +16,7 @@ class SupplierSerializer(serializers.ModelSerializer):
             'phone', 'email', 'address'
         ]
         read_only_fields = ['id']
+
 
 class SupplyBatchSerializer(serializers.ModelSerializer):
     """
@@ -37,6 +38,7 @@ class SupplyBatchSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id']
 
+
 class SupplyBatchWriteSerializer(serializers.ModelSerializer):
     """
     Serializador de ESCRITURA para crear/actualizar lotes.
@@ -49,6 +51,7 @@ class SupplyBatchWriteSerializer(serializers.ModelSerializer):
             'initial_stock', 'current_stock', 'acquisition_cost'
         ]
         read_only_fields = ['id', 'created_at']
+
 
 class SupplySerializer(serializers.ModelSerializer):
     """
@@ -112,6 +115,7 @@ class SupplySerializer(serializers.ModelSerializer):
             current_stock__gt=0
         ).order_by('expiration_date')
         return SupplyBatchSerializer(active_batches, many=True).data
+
 
 class SupplyWriteSerializer(serializers.ModelSerializer):
     """
