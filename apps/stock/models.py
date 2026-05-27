@@ -29,7 +29,7 @@ class Supply(models.Model):
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True, null=True)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    min_stock_alert = models.IntegerField(default=0)
+    min_stock = models.IntegerField(default=0)   # antes min_stock_alert
 
     class Meta:
         db_table = 'supplies'
@@ -113,3 +113,11 @@ class ClinicalProcedureSupply(models.Model):
 
     def __str__(self):
         return f"Proc {self.procedure_id} - {self.batch.supply.name} x{self.quantity_used}"
+    
+class Medication(models.Model):
+    name = models.CharField(max_length=150)
+    dosage_quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    dosage_unit = models.CharField(max_length=20)  # ej. "mg", "ml"
+
+    def __str__(self):
+        return f"{self.name} ({self.dosage_quantity} {self.dosage_unit})"

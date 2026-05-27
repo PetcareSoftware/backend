@@ -50,13 +50,21 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
-
-class ClinicalStaff(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='clinical_staff')
+    
+class NaturalPerson(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='natural_person')
     phone = models.CharField(max_length=30, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     dni = models.CharField(max_length=20, blank=True, null=True)
-    hired_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Datos de {self.user.email}"
+
+class ClinicalStaff(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='clinical_staff')
+    natural_person = models.OneToOneField(NaturalPerson, on_delete=models.CASCADE, null=True, blank=True)
+    # hired_at se eliminará en el punto 4
+    # phone, address, dni ya no van aquí
 
     def __str__(self):
         return f"Staff - {self.user.email}"
@@ -68,6 +76,7 @@ class Veterinarian(models.Model):
 
     def __str__(self):
         return f"Veterinarian - {self.clinical_staff.user.email}"
+    
 
 
 
