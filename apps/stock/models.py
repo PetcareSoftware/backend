@@ -76,7 +76,7 @@ class PurchaseOrder(models.Model):
     ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     manager = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
+        'users.ClinicalStaff', 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True, 
@@ -121,20 +121,3 @@ class ClinicalProcedureSupply(models.Model):
     def __str__(self):
         return f"Proc {self.clinical_procedure_id} - {self.supply.name} x{self.quantity_used}"
     
-class AuditSupplyBatch(models.Model):
-    audit_id = models.AutoField(primary_key=True)
-    batch_id = models.UUIDField()
-    action = models.CharField(max_length=10)
-    old_data = models.JSONField(null=True, blank=True)
-    new_data = models.JSONField(null=True, blank=True)
-    changed_at = models.DateTimeField()
-    changed_by = models.CharField(max_length=255)
-
-    class Meta:
-        managed = False  
-        db_table = 'audit_supply_batches'
-        verbose_name = 'Auditoría de Lote'
-        verbose_name_plural = 'Auditorías de Lotes'
-
-    def __str__(self):
-        return f"{self.action} en Lote {self.batch_id} - {self.changed_at.strftime('%Y-%m-%d %H:%M')}"
