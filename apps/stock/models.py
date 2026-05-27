@@ -1,5 +1,6 @@
 # apps/stock/models.py
 from django.db import models
+from django.conf import settings
 import uuid
 
 class Supplier(models.Model):
@@ -74,7 +75,13 @@ class PurchaseOrder(models.Model):
         ('CANCELLED', 'Cancelada'),
     ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    manager = models.ForeignKey('users.Manager', on_delete=models.SET_NULL, null=True, blank=True, related_name='purchase_orders')
+    manager = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='purchase_orders'
+    )
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase_orders')
     total_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='REQUESTED')
@@ -113,3 +120,21 @@ class ClinicalProcedureSupply(models.Model):
 
     def __str__(self):
         return f"Proc {self.clinical_procedure_id} - {self.supply.name} x{self.quantity_used}"
+    
+class AuditSupplyBatch(models.Model):
+    audit_id = models.AutoField(primary_key=True)
+    batch_id = models.UUIDField()
+    action = models.CharField(max_length=10)
+    old_data = models.JSONField(null=True, blank=True)
+    new_data = models.JSONField(null=True, blank=True)
+    changed_at = models.DateTimeField()
+    changed_by = models.CharField(max_length=255)
+
+    class Meta:
+        managed = False  
+        db_table = 'audit_supply_batches'
+        verbose_name = 'Auditoría de Lote'
+        verbose_name_plural = 'Auditorías de Lotes'
+
+    def __str__(self):
+        return f"{self.action} en Lote {self.batch_id} - {self.changed_at.strftime('%Y-%m-%d %H:%M')}"
