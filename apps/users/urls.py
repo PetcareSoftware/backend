@@ -1,25 +1,12 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 from . import views
 
-# El router se encarga de crear las rutas automáticas para el InsumoViewSet
-router = DefaultRouter()
-router.register(r'insumos', views.InsumoViewSet, basename='insumo')
-
 urlpatterns = [
-    # Tus rutas de seguridad
-    path('recepcionista/', views.RecepcionistaTestView.as_view(), name='recepcionista_test'),
-    path('gerente/', views.PanelGerenteView.as_view(), name='panel_gerente'),
-    path('me/', views.VerificarUsuarioView.as_view(), name='verificar_usuario'),
+    # Tus rutas de seguridad (ajustadas a la nueva convención en inglés)
+    path('receptionist/', views.ReceptionistTestView.as_view(), name='receptionist_test'),
+    path('manager/', views.ManagerDashboardView.as_view(), name='manager_dashboard'),
+    path('me/', views.VerifyUserView.as_view(), name='verify_user'),
     
     # La ruta de tu compañero
-    path('', include(router.urls)),
+    path('logs/', views.LogDashboardView.as_view(), name='log_entry_list'),
 ]
-
-
-
-
-
-
-
-

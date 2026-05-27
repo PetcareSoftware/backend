@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Logs - PetCare</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-4">
+    <h1 class="mb-3">Historial de Eventos del Sistema</h1>
+
+    <div class="row mb-3">
+        <!-- ID Usuario -->
+        <div class="col-md-2">
+            <label for="filtroUser" class="form-label">ID Usuario</label>
+            <input type="number" id="filtroUser" class="form-control" placeholder="ID Usuario">
+        </div>
+        <!-- Desde -->
+        <div class="col-md-2">
+            <label for="filtroDesdeFecha" class="form-label"
+                   title="Indique la FECHA y HORA desde cuando desea empezar a buscar los eventos">
+                Desde: <span style="font-size:0.8rem; color:#6c757d;">&#9432;</span>
+            </label>
+            <input type="date" id="filtroDesdeFecha" class="form-control" aria-label="Fecha desde">
+        </div>
+        <div class="col-md-1">
+            <label class="form-label d-none d-md-block">&nbsp;</label>
+            <input type="time" id="filtroDesdeHora" class="form-control" aria-label="Hora desde">
+        </div>
+        <!-- Hasta -->
+        <div class="col-md-2">
+            <label for="filtroHastaFecha" class="form-label"
+                   title="Indique la FECHA y HORA hasta cuando desea acotar la búsqueda de eventos">
+                Hasta: <span style="font-size:0.8rem; color:#6c757d;">&#9432;</span>
+            </label>
+            <input type="date" id="filtroHastaFecha" class="form-control" aria-label="Fecha hasta">
+        </div>
+        <div class="col-md-1">
+            <label class="form-label d-none d-md-block">&nbsp;</label>
+            <input type="time" id="filtroHastaHora" class="form-control" aria-label="Hora hasta">
+        </div>
+        <!-- Acción -->
+        <div class="col-md-2">
+            <label for="filtroAction" class="form-label">Acción</label>
+            <select id="filtroAction" class="form-select">
+                <option value="">Todas las acciones</option>
+                <option value="POST">POST</option>
+                <option value="GET">GET</option>
+                <option value="PUT">PUT</option>
+                <option value="PATCH">PATCH</option>
+                <option value="DELETE">DELETE</option>
+                <option value="login">Login</option>
+                <option value="logout">Logout</option>
+                <option value="access_granted">Acceso concedido</option>
+                <option value="access_denied">Acceso denegado</option>
+                <option value="password_change">Cambio de contraseña</option>
+                <option value="record_create">Creación de registro</option>
+                <option value="record_update">Actualización</option>
+                <option value="record_delete">Eliminación</option>
+            </select>
+        </div>
+        <!-- Botón -->
+        <div class="col-md-2 d-flex align-items-end">
+            <button id="btnFiltrar" class="btn btn-primary w-100">Filtrar</button>
+        </div>
+    </div>
+
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Fecha / Hora</th>
+                <th>Usuario</th>
+                <th>Acción</th>
+                <th>Resumen</th>
+                <th>Ruta</th>
+            </tr>
+        </thead>
+        <tbody id="logsBody">
+            <tr><td colspan="6" class="text-center">Cargando...</td></tr>
+        </tbody>
+    </table>
+
+    <nav>
+        <ul class="pagination justify-content-center" id="paginacion"></ul>
+    </nav>
+
+    <script>
+        let currentPage = 1;
+
+        function cargarLogs() {
+            const params = new URLSearchParams();
+            const userId = document.getElementById('filtroUser').value.trim();
+            const desdeFecha = document.getElementById('filtroDesdeFecha').value;
+            const desdeHora = document.getElementById('filtroDesdeHora').value || '00:00';
+            const hastaFecha = document.getElementById('filtroHastaFecha').value;
+            const hastaHora = document.getElementById('filtroHastaHora').value || '23:59';
+            const action = document.getElementById('filtroAction').value;
+
+            if (userId) params.append('user_id', userId);
+            if (desdeFecha) {
+                const desdeISO = `${desdeFecha}T${desdeHora}:00`;
+                params.append('desde', desdeISO);
+            }
+            if (hastaFecha) {
+                const hastaISO = `${hastaFecha}T${hastaHora}:59`;
+                params.append('hasta', hastaISO);
+            }
+            if (action) params.append('action', action);
+            params.append('page', currentPage);
+
+            fetch('/api/logs/?' + params.toString())
+                .then(response => {
+                    if (!response.ok) throw new Error('Error al cargar');
+                    return response.json();
+                })
+                .then(data => {
+                    const tbody = document.getElementById('logsBody');
+                    tbody.innerHTML = '';
+                    if (data.results.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No se encontraron registros.</td></tr>';
+                    } else {
+                        data.results.forEach(log => {
+                            const row = document.createElement('tr');
+                            const detallesCortos = (log.detalles || '').substring(0, 80) + (log.detalles && log.detalles.length > 80 ? '...' : '');
+                            row.innerHTML = `
+                                <td>${log.id}</td>
+                                <td>${new Date(log.fecha).toLocaleString('es-VE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+                                <td>${log.usuario_nombre || 'Sistema'}</td>
+                                <td><span class="badge bg-secondary">${log.accion}</span></td>
+                                <td title="${log.detalles || ''}">${log.resumen}</td>
+                                <td>${log.ruta || ''}</td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    }
+                    // Paginación
+                    const pag = document.getElementById('paginacion');
+                    pag.innerHTML = '';
+                    if (data.previous) {
+                        pag.innerHTML += `<li class="page-item"><a class="page-link" href="#" onclick="cambiarPagina(${currentPage - 1})">← Anterior</a></li>`;
+                    }
+                    if (data.next) {
+                        pag.innerHTML += `<li class="page-item"><a class="page-link" href="#" onclick="cambiarPagina(${currentPage + 1})">Siguiente →</a></li>`;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('logsBody').innerHTML = '<tr><td colspan="6" class="text-danger text-center">Error al cargar los datos.</td></tr>';
+                });
+        }
+
+        function cambiarPagina(pag) {
+            currentPage = pag;
+            cargarLogs();
+        }
+
+        document.getElementById('btnFiltrar').addEventListener('click', () => {
+            currentPage = 1;
+            cargarLogs();
+        });
+
+        // Carga inicial
+        cargarLogs();
+    </script>
+</body>
+</html>
