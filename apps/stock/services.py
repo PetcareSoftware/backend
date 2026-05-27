@@ -2,13 +2,12 @@
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-from apps.stock.models import Supply, SupplyBatch, ConsultationSupply
+from apps.stock.models import Supply, SupplyBatch, ConsultationSupply, ClinicalProcedureSupply
 
 @transaction.atomic
-def consume_supply_fifo(supply_id, quantity, consultation_id=None):
+def consume_supply_fifo(supply_id, quantity, consultation_id=None, procedure_id=None):
     """
-    Consume stock de un insumo médico utilizando el algoritmo FIFO
-    (First Expiry First Out) basado en la fecha de vencimiento.
+    Consume stock FIFO, registrando trazabilidad en consulta o procedimiento clínico.
     """
     if quantity <= 0:
         raise ValidationError("La cantidad a consumir debe ser mayor que cero.")
@@ -30,19 +29,26 @@ def consume_supply_fifo(supply_id, quantity, consultation_id=None):
             f"Stock insuficiente para {supply.name}. Requerido: {quantity}, Disponible: {total_available}."
         )
 
-    remaining_to_consume = quantity
+    remaining = quantity
     for batch in batches:
-        if remaining_to_consume <= 0:
+        if remaining <= 0:
             break
-        take = min(batch.current_stock, remaining_to_consume)
+        take = min(batch.current_stock, remaining)
         batch.current_stock -= take
         batch.save()
+
         if consultation_id:
             ConsultationSupply.objects.create(
                 consultation_id=consultation_id,
                 batch=batch,
                 quantity_used=take
             )
-        remaining_to_consume -= take
+        if procedure_id:
+            ClinicalProcedureSupply.objects.create(
+                procedure_id=procedure_id,
+                batch=batch,
+                quantity_used=take
+            )
+        remaining -= take
 
     return supply

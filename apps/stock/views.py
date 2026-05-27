@@ -11,6 +11,7 @@ class InventoryConsumeView(APIView):
         supply_id = request.data.get('supply_id')
         quantity = request.data.get('quantity')
         consultation_id = request.data.get('consultation_id')
+        procedure_id = request.data.get('procedure_id')
 
         if not supply_id or not quantity:
             return Response(
@@ -27,7 +28,11 @@ class InventoryConsumeView(APIView):
             )
 
         try:
-            updated_supply = consume_supply_fifo(supply_id, quantity, consultation_id)
+            updated_supply = consume_supply_fifo(
+                supply_id, quantity,
+                consultation_id=consultation_id,
+                procedure_id=procedure_id
+            )
             return Response({
                 "message": "Consumo FIFO registrado con éxito.",
                 "supply_id": updated_supply.id,
