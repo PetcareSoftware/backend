@@ -19,5 +19,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/stock/', include('apps.stock.urls')),
+    # Modifica la línea de api/stock/ para que quede así:
+    path('api/v1/inventory/', include('apps.stock.urls')),
 ]
