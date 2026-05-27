@@ -57,7 +57,8 @@ class ConsultationSupply(models.Model):
         help_text="ID de la consulta (tabla consultations)"
     )
     batch = models.ForeignKey(
-        SupplyBatch, on_delete=models.CASCADE, related_name='consultation_usages'
+        SupplyBatch, on_delete=models.CASCADE,
+        related_name='consultation_usages'
     )
     quantity_used = models.IntegerField()
 
@@ -66,7 +67,10 @@ class ConsultationSupply(models.Model):
         unique_together = (('consultation_id', 'batch'),)
 
     def __str__(self):
-        return f"Uso en consulta {self.consultation_id} - {self.batch.supply.name} x{self.quantity_used}"
+        return (
+            f"Uso en consulta {self.consultation_id} "
+            f"- {self.batch.supply.name} x{self.quantity_used}"
+        )
 
 
 class PurchaseOrder(models.Model):
@@ -77,14 +81,19 @@ class PurchaseOrder(models.Model):
         ('CANCELLED', 'Cancelada'),
     ]
     manager = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, blank=True, related_name='purchase_orders'
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='purchase_orders'
     )
     supplier = models.ForeignKey(
-        Supplier, on_delete=models.CASCADE, related_name='purchase_orders'
+        Supplier, on_delete=models.CASCADE,
+        related_name='purchase_orders'
     )
     total_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='REQUESTED')
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='REQUESTED'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -96,8 +105,12 @@ class PurchaseOrder(models.Model):
 
 
 class PurchaseOrderItem(models.Model):
-    order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='items')
-    supply = models.ForeignKey(Supply, on_delete=models.CASCADE, related_name='purchase_items')
+    order = models.ForeignKey(
+        PurchaseOrder, on_delete=models.CASCADE, related_name='items'
+    )
+    supply = models.ForeignKey(
+        Supply, on_delete=models.CASCADE, related_name='purchase_items'
+    )
     quantity_requested = models.IntegerField()
     unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -109,9 +122,12 @@ class PurchaseOrderItem(models.Model):
 
 
 class ClinicalProcedureSupply(models.Model):
-    procedure_id = models.BigIntegerField(help_text="ID del procedimiento clínico")
+    procedure_id = models.BigIntegerField(
+        help_text="ID del procedimiento clínico"
+    )
     batch = models.ForeignKey(
-        SupplyBatch, on_delete=models.CASCADE, related_name='procedure_usages'
+        SupplyBatch, on_delete=models.CASCADE,
+        related_name='procedure_usages'
     )
     quantity_used = models.IntegerField()
 
@@ -122,7 +138,10 @@ class ClinicalProcedureSupply(models.Model):
         verbose_name_plural = 'Insumos utilizados en procedimientos'
 
     def __str__(self):
-        return f"Proc {self.procedure_id} - {self.batch.supply.name} x{self.quantity_used}"
+        return (
+            f"Proc {self.procedure_id} "
+            f"- {self.batch.supply.name} x{self.quantity_used}"
+        )
 
 
 class AuditSupplyBatch(models.Model):
@@ -141,4 +160,7 @@ class AuditSupplyBatch(models.Model):
         verbose_name_plural = 'Auditorías de Lotes'
 
     def __str__(self):
-        return f"{self.action} en Lote {self.batch_id} - {self.changed_at.strftime('%Y-%m-%d %H:%M')}"
+        return (
+            f"{self.action} en Lote {self.batch_id} "
+            f"- {self.changed_at.strftime('%Y-%m-%d %H:%M')}"
+        )

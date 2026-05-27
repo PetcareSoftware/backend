@@ -18,7 +18,7 @@ class SupplierModelTest(TestCase):
             email="ventas@petmed.com",
             address="Av. Principal #123, Caracas"
         )
-        self.assertIsInstance(supplier.id, uuid.UUID)
+        self.assertIsInstance(supplier.id, int)
         self.assertEqual(str(supplier), "PetMed Supplies")
 
     def test_supplier_unique_name(self):
@@ -42,7 +42,7 @@ class SupplyModelTest(TestCase):
             category="MEDICINE",
             min_stock_alert=10
         )
-        self.assertIsInstance(supply.id, uuid.UUID)
+        self.assertIsInstance(supply.id, int)
         self.assertEqual(str(supply), "MED-001 - Amoxicilina 500mg")
         self.assertEqual(supply.category, "MEDICINE")
 
@@ -76,7 +76,7 @@ class SupplyBatchModelTest(TestCase):
             current_stock=100,
             acquisition_cost=Decimal("15.50")
         )
-        self.assertIsInstance(batch.id, uuid.UUID)
+        self.assertIsInstance(batch.id, int)
         self.assertEqual(batch.current_stock, 100)
 
     def test_batch_belongs_to_supply(self):
@@ -106,7 +106,7 @@ class PurchaseOrderModelTest(TestCase):
             total_cost=Decimal("500.00"),
             status='REQUESTED'
         )
-        self.assertIsInstance(order.id, uuid.UUID)
+        self.assertIsInstance(order.id, int)
         self.assertEqual(order.status, 'REQUESTED')
         self.assertIsNone(order.manager)  # manager es nullable
 
