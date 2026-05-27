@@ -12,11 +12,14 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+import os
+import sys
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-
-AUTH_USER_MODEL = 'users.User'  # Especificamos nuestro modelo de usuario personalizado
+# Add apps folder to sys.path to allow absolute imports of apps
+sys.path.insert(0, str(BASE_DIR / 'apps'))
 
 # Application definition
 
@@ -27,9 +30,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.users',  # Nuestra app de usuarios
-    'apps.owners',  # Nuestra app de propietarios
-    'apps.stock',  # Nuestra app de inventario
+    
+    # Third-party
+    'rest_framework',
+    
+    # Local apps
+    'appointments',
+    'common',
+    'notifications',
+    'owners',
+    'patients',
+    'reporting',
+    'stock',
+    'users',
 ]
 
 MIDDLEWARE = [
