@@ -15,7 +15,6 @@ class Breed(models.Model):
         db_table = 'breeds'
     def __str__(self):
         return f"{self.name} ({self.species.name})"
-      
 class Patient(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     owner = models.ForeignKey('owners.Owner', on_delete=models.PROTECT)
