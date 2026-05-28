@@ -25,7 +25,7 @@ class Supply(models.Model):
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True, null=True)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    min_stock_alert = models.IntegerField(default=0)
+    min_stock = models.IntegerField(default=0)   # antes min_stock_alert
 
     class Meta:
         db_table = 'supplies'

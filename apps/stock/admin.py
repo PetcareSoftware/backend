@@ -10,7 +10,7 @@ class SupplierAdmin(admin.ModelAdmin):
 
 @admin.register(Supply)
 class SupplyAdmin(admin.ModelAdmin):
-    list_display = ('sku', 'name', 'category', 'min_stock_alert')
+    list_display = ('sku', 'name', 'category', 'min_stock')
     list_filter = ('category',)
     search_fields = ('sku', 'name')
 
