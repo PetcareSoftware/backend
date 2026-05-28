@@ -30,5 +30,40 @@ class User(AbstractUser):
 
     objects = UserManager()
 
+    def save(self, *args, **kwargs):
+        if not self.username:
+            self.username = self.email
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.email
+    
+class NaturalPerson(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='natural_person')
+    phone = models.CharField(max_length=30, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    dni = models.CharField(max_length=20, blank=True, null=True)
+
+    def __str__(self):
+        return f"Datos de {self.user.email}"
+
+class ClinicalStaff(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='clinical_staff')
+    natural_person = models.OneToOneField(NaturalPerson, on_delete=models.CASCADE, null=True, blank=True)
+    # hired_at se eliminará en el punto 4
+    # phone, address, dni ya no van aquí
+
+    def __str__(self):
+        return f"Staff - {self.user.email}"
+
+class Veterinarian(models.Model):
+    clinical_staff = models.OneToOneField(ClinicalStaff, on_delete=models.CASCADE, related_name='veterinarian')
+    specialty = models.CharField(max_length=100, blank=True, null=True)
+    # license_number omitido según líder
+
+    def __str__(self):
+        return f"Veterinarian - {self.clinical_staff.user.email}"
+    
+
+
+
