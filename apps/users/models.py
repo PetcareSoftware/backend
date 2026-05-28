@@ -1,14 +1,16 @@
-from django.db import models
-from django.contrib.auth.models import AbstractUser, BaseUserManager
 import uuid
+from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.db import models
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
-            raise ValueError('El email es obligatorio')
+            raise ValueError('El correo electrónico es obligatorio')
         email = self.normalize_email(email)
+        
         if 'username' not in extra_fields or not extra_fields.get('username'):
-            extra_fields['username'] = email
+            extra_fields['username'] = email.split('@')[0]
+            
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -17,29 +19,14 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('El superusuario debe tener is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('El superusuario debe tener is_superuser=True.')
         return self.create_user(email, password, **extra_fields)
-
-class Role(models.Model):
-    name = models.CharField(max_length=50, unique=True)
-    # permissions eliminado
-    def __str__(self):
-        return self.name
 
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    email = models.EmailField(unique=True, verbose_name="Correo Electrónico")
-    username = models.CharField(max_length=150, unique=True, blank=True, null=True)
-    # phone_number y address eliminados (se mueven a Owner)
-    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
-    profile_image_url = models.URLField(max_length=500, blank=True, null=True)
-    is_phone_verified = models.BooleanField(default=False)
+    email = models.EmailField(unique=True)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name']
+    REQUIRED_FIELDS = []
 
     objects = UserManager()
 
