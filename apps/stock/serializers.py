@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from rest_framework import serializers
 from django.db.models import Sum
 from django.utils import timezone
@@ -130,3 +131,8 @@ class SupplyWriteSerializer(serializers.ModelSerializer):
             'category', 'min_stock_alert'
         ]
         read_only_fields = ['id']
+=======
+﻿# Serializers obsoletos (eran para MedicalSupply). 
+# El endpoint InventoryConsumeView no los necesita.
+# Si se requieren en el futuro, se reescribirán con los modelos Supply, SupplyBatch.
+>>>>>>> origin/b2/feature/consumo-lotes-reales
