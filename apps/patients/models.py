@@ -6,20 +6,22 @@ class Patient(models.Model):
     gender = models.CharField(max_length=10)
     birth_date = models.DateField()
     current_weight = models.FloatField()
-    owner = models.ForeignKey('owners.Owner',on_delete=models.SET_NULL,null=True)
-    physical_marks = models.CharField(max_length=255)
-    microchip_id = models.CharField(max_length=50)
+    owner = models.ForeignKey('owners.Owner', on_delete=models.SET_NULL, null=True, related_name='patients')
+    physical_marks = models.CharField(max_length=255, blank=True, null=True)
+    microchip_id = models.CharField(max_length=50, blank=True, null=True)
     reproductive_status = models.CharField(max_length=50)
 
     class Meta:
-        db_table = 'patient'
+        db_table = 'patients'
 
+    def __str__(self):
+        return self.name
 
-class ClinicalRecords(models.Model):
-    patient = models.OneToOneField(Patient,on_delete=models.CASCADE)
-    opened_at = models.DateField()
-    allergies_history = models.TextField()
-    medical_alerts = models.TextField()
+class ClinicalRecord(models.Model):
+    patient = models.OneToOneField(Patient, on_delete=models.CASCADE, related_name='clinical_record')
+    opened_at = models.DateField(auto_now_add=True)
+    allergies_history = models.TextField(blank=True, null=True)
+    medical_alerts = models.TextField(blank=True, null=True)
 
     class Meta:
         db_table= 'clinical_records'
