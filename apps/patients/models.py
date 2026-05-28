@@ -24,7 +24,28 @@ class ClinicalRecord(models.Model):
     medical_alerts = models.TextField(blank=True, null=True)
 
     class Meta:
-        db_table = 'clinical_records'
+        db_table= 'clinical_records'
 
-    def __str__(self):
-        return f"Historial Clínico - {self.patient.name}"
+class VaccinationPlan(models.Model):
+    patient = models.ForeignKey('patients.Patient', on_delete=models.CASCADE, related_name='vaccination_plans')
+    vet = models.ForeignKey('users.Veterinarian', on_delete=models.SET_NULL, null=True)
+    is_active = models.BooleanField(default=True)
+
+class VaccinationPlanItem(models.Model):
+    plan = models.ForeignKey(VaccinationPlan, on_delete=models.CASCADE, related_name='items')
+    vaccine_name = models.CharField(max_length=100)
+    target_age_days = models.IntegerField(help_text="Edad óptima sugerida en días")
+
+class VaccinationDewormingEvent(models.Model):
+    TYPE_CHOICES = [
+        ('VACCINE', 'Vacuna'),
+        ('DEWORMING', 'Desparasitante')
+    ]
+    plan = models.ForeignKey(VaccinationPlan, on_delete=models.SET_NULL, null=True, blank=True)
+    # Como la app 'clinic' no está visible, referenciamos el modelo en texto para evitar errores
+    consultation = models.ForeignKey('appointments.Appointment', on_delete=models.SET_NULL, null=True, blank=True)
+    event_type = models.CharField(max_length=15, choices=TYPE_CHOICES)
+    dose = models.CharField(max_length=50)
+    applied_date = models.DateField()
+    sanitary_batch = models.CharField(max_length=100)
+    next_due_date = models.DateField(null=True, blank=True)

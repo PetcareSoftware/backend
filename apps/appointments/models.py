@@ -3,36 +3,44 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 # Create your models here.
 
-class Appointment(models.Model):
-    patient = models.ForeignKey('patients.Patient', on_delete=models.CASCADE, related_name='appointments')
-    veterinarian = models.ForeignKey('users.Veterinarian', on_delete=models.CASCADE, related_name='appointments')
-    reason_for_visit = models.TextField(help_text="Motivo de la consulta")
-    appointment_date = models.DateTimeField()
-    def __str__(self):
-        return f"Cita el {self.appointment_date} - Paciente ID: {self.patient_id}"
-    
 class VetSchedule(models.Model):
     vet = models.ForeignKey('users.Veterinarian', on_delete=models.CASCADE, related_name='schedules')
     start_date = models.DateField()
     end_date = models.DateField()
 
-    def clean(self):
-        super().clean()
-        # 1. Fecha fin no anterior a fecha inicio
-        if self.start_date and self.end_date and self.start_date > self.end_date:
-            raise ValidationError("La fecha de fin no puede ser anterior a la fecha de inicio.")
+class TimeSlot(models.Model):
+    STATUS_CHOICES = [
+        ('FREE', 'Libre'),
+        ('BOOKED', 'Reservado'),
+        ('BLOCKED', 'Bloqueado')
+    ]
+    schedule = models.ForeignKey(VetSchedule, on_delete=models.CASCADE, related_name='time_slots')
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='FREE')
 
-        # 2. Los TimeSlots asociados deben estar dentro del rango (si ya existe la instancia)
-        if self.pk:
-            slots_out_of_range = self.time_slots.filter(
-                Q(start_time__date__lt=self.start_date) |
-                Q(end_time__date__gt=self.end_date)
-            )
-            if slots_out_of_range.exists():
-                raise ValidationError(
-                    "Las franjas horarias (TimeSlots) deben estar contenidas dentro del intervalo de fecha de la agenda."
-                )
+class Appointment(models.Model):
+    STATUS_CHOICES = [
+        ('SCHEDULED', 'Programada'),
+        ('CONFIRMED', 'Confirmada'),
+        ('CHECKED_IN', 'En Sala'),
+        ('COMPLETED', 'Completada'),
+        ('CANCELLED', 'Cancelada')
+    ]
+    slot = models.OneToOneField(TimeSlot, on_delete=models.CASCADE, null=True)
+    patient = models.ForeignKey('patients.Patient', on_delete=models.CASCADE)
+    reason_for_visit = models.TextField(help_text="Motivo de la consulta")
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='SCHEDULED')
+    checked_in_at = models.DateTimeField(null=True, blank=True)
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
+class WaitingListEntry(models.Model):
+    PRIORITY_CHOICES = [
+        ('LOW', 'Baja'), ('MEDIUM', 'Media'), ('HIGH', 'Alta'), ('CRITICAL', 'Crítica')
+    ]
+    STATUS_CHOICES = [
+        ('WAITING', 'Esperando'), ('ATTENDING', 'En Atención'), ('DONE', 'Finalizado'), ('ABANDONED', 'Abandonó')
+    ]
+    patient = models.ForeignKey('patients.Patient', on_delete=models.CASCADE)
+    appointment = models.OneToOneField(Appointment, on_delete=models.SET_NULL, null=True, blank=True)
+    priority_level = models.CharField(max_length=10, choices=PRIORITY_CHOICES)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='WAITING')
