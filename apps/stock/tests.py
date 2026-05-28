@@ -12,7 +12,6 @@ User = get_user_model()
 
 class BatchCreationTestCase(TestCase):
     def setUp(self):
-        # Creamos el usuario de prueba
         self.user = User.objects.create_user(
             email='pascia@petcare.com', 
             password='testpass123', 
@@ -22,7 +21,6 @@ class BatchCreationTestCase(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
         
-        # Creamos un insumo base en la BD para poder meterle lotes
         self.supply = Supply.objects.create(
             sku='SKU-BATCH-01', 
             name='Gasa Estéril', 

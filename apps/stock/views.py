@@ -42,7 +42,12 @@ class SupplyBatchCreateView(APIView):
 
 
     def get(self, request):
-        queryset = SupplyBatch.objects.select_related('supply').all()
+        today = timezone.now().date()
+        queryset = SupplyBatch.objects.filter(
+            expiration_date__gt=today,
+            current_stock__gt=0
+        ).select_related('supply').order_by('expiration_date')
+        
         serializer = BatchReadSerializer(queryset, many=True)
         return Response(serializer.data)
 
