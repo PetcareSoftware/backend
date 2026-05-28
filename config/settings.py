@@ -14,6 +14,11 @@ SECRET_KEY = env('SECRET_KEY', 'unsafe-local-dev-key')
 JWT_SECRET_KEY = env('JWT_SECRET_KEY', 'django-insecure-pv%6v^123!@#_petcare_security_key_2026_v1')
 DEBUG = env('DEBUG', 'True').lower() in {'1', 'true', 'yes', 'on'}
 ALLOWED_HOSTS = [h.strip() for h in env('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
+    if origin.strip()
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
