@@ -1,4 +1,5 @@
 # apps/stock/models.py
+from django.conf import settings
 from django.db import models
 from django.conf import settings
 import uuid
@@ -29,7 +30,7 @@ class Supply(models.Model):
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True, null=True)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    min_stock_alert = models.IntegerField(default=0)
+    min_stock = models.IntegerField(default=0)   # antes min_stock_alert
 
     class Meta:
         db_table = 'supplies'
@@ -55,17 +56,16 @@ class SupplyBatch(models.Model):
 
 class ConsultationSupply(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # consultation_id será FK a consultations (modelo de otro programador)
-    # Por ahora usamos UUIDField sin FK para evitar errores de dependencia circular
     consultation_id = models.UUIDField(help_text="ID de la consulta (debe existir en la tabla consultations)")
-    batch = models.ForeignKey(SupplyBatch, on_delete=models.CASCADE, related_name='consultation_usages')
+    batch = models.ForeignKey('SupplyBatch', on_delete=models.CASCADE, related_name='consultation_usages')
     quantity_used = models.IntegerField()
 
     class Meta:
         db_table = 'consultation_supplies'
+        unique_together = (('consultation_id', 'batch'),)   # Clave compuesta simulada
 
     def __str__(self):
-        return f"Uso en consulta {self.consultation_id} - {self.quantity_used}"
+        return f"Uso en consulta {self.consultation_id} - {self.batch.supply.name} x{self.quantity_used}"
 
 class PurchaseOrder(models.Model):
     STATUS_CHOICES = [
@@ -108,13 +108,13 @@ class PurchaseOrderItem(models.Model):
         return f"{self.supply.name} - {self.quantity_requested} unidades"
     
 class ClinicalProcedureSupply(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    clinical_procedure_id = models.UUIDField(help_text="ID del procedimiento clínico (clinical_procedures.id)")
-    supply = models.ForeignKey('Supply', on_delete=models.CASCADE, related_name='procedure_usages')
+    procedure_id = models.UUIDField(help_text="ID del procedimiento clínico (clinical_procedures.id)")
+    batch = models.ForeignKey('SupplyBatch', on_delete=models.CASCADE, related_name='procedure_usages')
     quantity_used = models.IntegerField()
 
     class Meta:
         db_table = 'clinical_procedures_supplies'
+        unique_together = (('procedure_id', 'batch'),)
         verbose_name = 'Insumo utilizado en procedimiento'
         verbose_name_plural = 'Insumos utilizados en procedimientos'
 

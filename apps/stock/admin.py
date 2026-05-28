@@ -10,7 +10,7 @@ class SupplierAdmin(admin.ModelAdmin):
 
 @admin.register(Supply)
 class SupplyAdmin(admin.ModelAdmin):
-    list_display = ('sku', 'name', 'category', 'min_stock_alert')
+    list_display = ('sku', 'name', 'category', 'min_stock')
     list_filter = ('category',)
     search_fields = ('sku', 'name')
 
@@ -38,5 +38,5 @@ class PurchaseOrderItemAdmin(admin.ModelAdmin):
 
 @admin.register(ClinicalProcedureSupply)
 class ClinicalProcedureSupplyAdmin(admin.ModelAdmin):
-    list_display = ('clinical_procedure_id', 'supply', 'quantity_used')
-    search_fields = ('clinical_procedure_id', 'supply__name')
+    list_display = ('procedure_id', 'batch', 'quantity_used')
+    search_fields = ('procedure_id', 'batch__supply__name')  # opcional
