@@ -1,3 +1,4 @@
 from django.contrib import admin
-
-# Register your models here.
+from .models import Appointment, WaitingListEntry
+admin.site.register(Appointment)
+admin.site.register(WaitingListEntry)

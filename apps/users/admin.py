@@ -1,3 +1,15 @@
 from django.contrib import admin
+from .models import ClinicalStaff, Role, User, Veterinarian
 
-# Register your models here.
+@admin.register(Role)
+class RoleAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at')
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ('email', 'first_name', 'last_name', 'role', 'is_active')
+    list_filter = ('role', 'is_active')
+    search_fields = ('email', 'first_name', 'last_name')
+
+admin.site.register(ClinicalStaff)
+admin.site.register(Veterinarian)

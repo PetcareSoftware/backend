@@ -1,0 +1,55 @@
+name: Django tests on PostgreSQL
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  tests-postgres:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: petcare_test
+          POSTGRES_USER: petcare
+          POSTGRES_PASSWORD: petcare
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U petcare -d petcare_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DEBUG: "False"
+      SECRET_KEY: ci-secret-key
+      JWT_SECRET_KEY: django-insecure-pv%6v^123!@#_petcare_security_key_2026_v1
+      DATABASE_URL: postgres://petcare:petcare@127.0.0.1:5432/petcare_test
+      CELERY_TASK_ALWAYS_EAGER: "True"
+      AUTO_GENERATE_SLOTS_ON_SCHEDULE_SAVE: "False"
+      BACKEND2_INVENTORY_URL: http://backend2.invalid/api/v1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run migrations
+        run: python manage.py migrate --noinput
+
+      - name: Run tests on PostgreSQL
+        run: python manage.py test
