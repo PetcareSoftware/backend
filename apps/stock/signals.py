@@ -9,7 +9,7 @@ from .models import SupplyBatch
 def check_minimum_stock(sender, instance, **kwargs):
     supply = instance.supply
     resultado = supply.batches.aggregate(total_stock=Sum('current_stock'))
-    stock_total = resultado['total_stock'] or 0
+    stock_total = resultado['total_stock'] or 0 
     if stock_total <= supply.min_stock_alert:
         mensaje = (
             f"ALERTA DE STOCK: El insumo '{supply.name}' (SKU: {supply.sku}) "
