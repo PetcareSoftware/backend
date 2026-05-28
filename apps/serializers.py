@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework import serializers
 from django.utils import timezone
 from apps.stock.models import Supply, SupplyBatch
 
