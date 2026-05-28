@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-
 import uuid
-from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
 class UserManager(BaseUserManager):
@@ -28,7 +26,6 @@ class User(AbstractUser):
     email = models.EmailField(unique=True, verbose_name="Correo Electrónico")
     username = models.CharField(max_length=150, unique=True, blank=True, null=True)
     # phone_number y address eliminados (se mueven a Owner)
-    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
     profile_image_url = models.URLField(max_length=500, blank=True, null=True)
     is_phone_verified = models.BooleanField(default=False)
     USERNAME_FIELD = 'email'

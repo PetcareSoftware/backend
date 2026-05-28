@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.contrib.auth.models import Group
 
 class Supplier(models.Model):
     name = models.CharField(max_length=150, unique=True)
@@ -68,7 +69,7 @@ class PurchaseOrder(models.Model):
         ('CANCELLED', 'Cancelada'),
     ]
     # Este se mantiene intacto: Django sabe que AUTH_USER_MODEL usa UUID y lo enlaza correctamente
-    manager = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='purchase_orders')
+    manager = models.ForeignKey(Group,on_delete=models.SET_NULL, null=True,blank=True,related_name='purchase_orders')
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase_orders')
     total_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='REQUESTED')

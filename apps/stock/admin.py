@@ -27,9 +27,9 @@ class ConsultationSupplyAdmin(admin.ModelAdmin):
 
 @admin.register(PurchaseOrder)
 class PurchaseOrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'supplier', 'total_cost', 'status', 'created_at')
-    list_filter = ('status', 'created_at')
-    search_fields = ('supplier__name',)
+    list_display = ('id', 'supplier', 'manager', 'total_cost', 'status', 'created_at')
+    search_fields = ('supplier__name', 'manager__name')
+    list_filter = ('status',)
 
 @admin.register(PurchaseOrderItem)
 class PurchaseOrderItemAdmin(admin.ModelAdmin):
