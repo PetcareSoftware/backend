@@ -5,5 +5,4 @@ class StockConfig(AppConfig):
     name = 'apps.stock'
 
     def ready(self):
-        # Preparado para la carga de señales del módulo de inventario
-        pass
+        import apps.stock.signals  # noqa: F401
