@@ -30,6 +30,8 @@ INSTALLED_APPS = [
     'apps.users',  # Nuestra app de usuarios
     'apps.owners',  # Nuestra app de propietarios
     'apps.stock',  # Nuestra app de inventario
+    'apps.patients',  # App de pacientes
+    'apps.appointments',  # App de citas
 ]
 
 MIDDLEWARE = [

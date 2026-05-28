@@ -1,9 +1,26 @@
 from django.db import models
+import uuid
 
-class Patient(models.Model):
+class Specie(models.Model):
+    id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+    name = models.CharField(max_length=50)
+    class Meta:
+        db_table = 'species'
+
+class Breed(models.Model):
+    id = models.UUIDField(primary_key=True,default=uuid.uuid4, editable =False)
+    species = models.ForeignKey(Specie,on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    species_breed = models.CharField(max_length=100)
-    gender = models.CharField(max_length=10)
+    class Meta:
+        db_table = 'breeds'
+    def __str__(self):
+        return f"{self.name} ({self.species.name})"
+      
+class Patient(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey('owners.Owner', on_delete=models.PROTECT)
+    breed = models.ForeignKey(Breed,on_delete=models.PROTECT)
+    name = models.CharField(max_length=100)
     birth_date = models.DateField()
     current_weight = models.FloatField()
     owner = models.ForeignKey('owners.Owner', on_delete=models.SET_NULL, null=True, related_name='patients')
