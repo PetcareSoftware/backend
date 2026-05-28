@@ -115,6 +115,16 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Contrato Backend 1 para citas, agenda e historial clinico.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'SECURITY': [{'jwtAuth': []}],
+    'APPEND_COMPONENTS': {
+        'securitySchemes': {
+            'jwtAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            },
+        },
+    },
 }
 
 SIMPLE_JWT = {
