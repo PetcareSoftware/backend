@@ -1,6 +1,7 @@
 # apps/stock/models.py
 from django.conf import settings
 from django.db import models
+from django.conf import settings
 import uuid
 
 class Supplier(models.Model):
@@ -74,7 +75,13 @@ class PurchaseOrder(models.Model):
         ('CANCELLED', 'Cancelada'),
     ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    manager = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='purchase_orders')
+    manager = models.ForeignKey(
+        'users.ClinicalStaff', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='purchase_orders'
+    )
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase_orders')
     total_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='REQUESTED')
@@ -112,12 +119,5 @@ class ClinicalProcedureSupply(models.Model):
         verbose_name_plural = 'Insumos utilizados en procedimientos'
 
     def __str__(self):
-        return f"Proc {self.procedure_id} - {self.batch.supply.name} x{self.quantity_used}"
+        return f"Proc {self.clinical_procedure_id} - {self.supply.name} x{self.quantity_used}"
     
-class Medication(models.Model):
-    name = models.CharField(max_length=150)
-    dosage_quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    dosage_unit = models.CharField(max_length=20)  # ej. "mg", "ml"
-
-    def __str__(self):
-        return f"{self.name} ({self.dosage_quantity} {self.dosage_unit})"
