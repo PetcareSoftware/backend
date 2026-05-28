@@ -1,6 +1,3 @@
-﻿from django.urls import path
-from apps.stock.views import InventoryConsumeView
+from django.urls import path
 
-urlpatterns = [
-    path('consume/', InventoryConsumeView.as_view(), name='inventory-consume'),
-]
+urlpatterns = []
