@@ -15,6 +15,9 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+AUTH_USER_MODEL = 'users.User'  # Especificamos nuestro modelo de usuario personalizado
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -24,6 +27,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'apps.users',  # Nuestra app de usuarios
+    'apps.owners',  # Nuestra app de propietarios
+    'apps.stock',  # Nuestra app de inventario
+    'apps.patients',  # App de pacientes
+    'apps.appointments',  # App de citas
 ]
 
 MIDDLEWARE = [
