@@ -1,0 +1,22 @@
+[project]
+name = "petcare-1"
+version = "0.1.0"
+description = "Clínica veterinaria"
+readme = "README.md"
+requires-python = ">=3.10,<4.0"
+dependencies = [
+  "Django>=5.2,<6",
+  "djangorestframework>=3.16,<3.19",
+  "django-tasks>=0.12.0",
+  "ruff"
+]
+
+[project.optional-dependencies]
+tasks = ["celery"]
+
+#[build-system]
+# Pin an upper bound for safety; uv bundles a compatible backend.
+#requires = ["hatchling>=1.27.0,<2.0"]
+#build-backend = "hatchling.build"
+
+#[tool.ruff.lint]

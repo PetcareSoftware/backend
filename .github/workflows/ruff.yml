@@ -1,0 +1,22 @@
+name: ruff-check
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+      - b1
+      - b2
+      - db
+      - sec
+jobs:
+  ruff_check:
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-python@v6.2.0
+        with:
+          python-version: 3.10.20
+          cache: pip
+      - name: Comprobación de defectos de ruff
+        uses: astral-sh/ruff-action@v4.0.0
+    timeout-minutes: 10
