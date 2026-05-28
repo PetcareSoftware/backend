@@ -2,20 +2,8 @@ from rest_framework.permissions import BasePermission
 from rest_framework import permissions
 from .models import groups
 
-class IsVeterinaryTechnician(BasePermission):
-    """
-    Permite acceso solo si el usuario es Admin o pertenece al grupo 'veterinary_technician'.
-    """
-    def has_permission(self, request, view):
-        if not request.user or not request.user.is_authenticated:
-            return False
+# --- Listas de permisos basadas en el documento de roles ---
 
-        # Verifica si el usuario está en el grupo correcto
-        return request.user.groups.filter(name="veterinary_technician").exists()
-    
-
-
-# Lista de codenames que definen al recepcionista
 RECEPTIONIST_PERMISSIONS = [
     'auth.add_manual_appointment',
     'auth.view_calendar_availability',
@@ -24,82 +12,102 @@ RECEPTIONIST_PERMISSIONS = [
     'auth.view_appointment_history',
 ]
 
-class HasReceptionistPermissions(BasePermission):
-    """
-    Permiso personalizado que concede acceso si el usuario autenticado
-    posee al menos uno de los permisos del rol de recepcionista.
-    """
+VETERINARIAN_PERMISSIONS = [
+    'auth.view_daily_agenda',
+    'auth.view_clinical_records',
+    'auth.document_medical_record',
+    'auth.prescribe_treatment',
+    'auth.mark_appointment_completed',
+    'auth.deduct_supply_usage',
+]
+
+VET_TECHNICIAN_PERMISSIONS = [
+    'auth.manage_catalog_crud',
+    'auth.manage_stock_levels',
+    'auth.process_supply_rest',
+    'auth.monitor_stock_alerts',
+    'auth.create_purchase_request',
+]
+
+MANAGER_PERMISSIONS = [
+    'auth.authorize_managerial_requests',
+    'auth.manage_purchase_lifecycle',
+    'auth.view_business_intelligence_kpis',
+    'auth.export_reports',
+]
+
+# --- Clases de Permisos ---
+
+class IsVeterinaryTechnician(BasePermission):
+    """Permite acceso si el usuario pertenece al grupo 'veterinary_technician'."""
     def has_permission(self, request, view):
-        # Si el usuario no está autenticado, deniega automáticamente
         if not request.user or not request.user.is_authenticated:
             return False
+        return request.user.groups.filter(name="veterinary_technician").exists()
 
-        # Obtiene todos los codenames de permisos del usuario
+class HasVeterinarianPermissions(BasePermission):
+    """Acceso si el usuario posee los permisos de Veterinario."""
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
         user_permissions = request.user.get_all_permissions()
+        return any(perm in user_permissions for perm in VETERINARIAN_PERMISSIONS)
 
-        # Verifica si alguno de los permisos del recepcionista está presente
+class HasVetTechnicianPermissions(BasePermission):
+    """Acceso si el usuario posee los permisos de Técnico Veterinario."""
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        user_permissions = request.user.get_all_permissions()
+        return any(perm in user_permissions for perm in VET_TECHNICIAN_PERMISSIONS)
+
+class HasManagerPermissions(BasePermission):
+    """Acceso si el usuario posee los permisos de Gerente."""
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        user_permissions = request.user.get_all_permissions()
+        return any(perm in user_permissions for perm in MANAGER_PERMISSIONS)
+
+class HasReceptionistPermissions(BasePermission):
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        user_permissions = request.user.get_all_permissions()
         return any(perm in user_permissions for perm in RECEPTIONIST_PERMISSIONS)
 
-
 class IsClient(BasePermission):
-    """
-    Este es tu 'guardia de seguridad'.
-    Solo dejará pasar la petición si el usuario es un Cliente.
-    """
     def has_permission(self, request, view):
-        # 1. Primero verifica que el usuario haya iniciado sesión (que no sea anónimo)
         if not request.user or not request.user.is_authenticated:
             return False
-            
-        # 2. Luego verifica si pertenece al grupo de 'client'
         return request.user.groups.filter(name='client').exists()
 
-
 class IsManager(BasePermission):
-    """
-    Permite acceso solo si el usuario está autenticado y pertenece al grupo 'manager'.
-    """
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False
         return request.user.groups.filter(name='manager').exists()
 
-
 class CustomModelPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False
-
-        # Verifica si el usuario tiene los permisos específicos que la vista requiere
         return request.user.has_perms(getattr(view, "permission_required", []))
-
 
 class DjangoModelPermissions(permissions.DjangoModelPermissions):
     perms_map = permissions.DjangoModelPermissions.perms_map | {
         "GET": ["%(app_label)s.view_%(model_name)s"],
         "HEAD": ["%(app_label)s.view_%(model_name)s"],
     }
-    
 
 class IsOwner(permissions.BasePermission):
-    """
-    Guardia de seguridad para los dueños del sistema.
-    """
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False
-
-        # Verifica si el usuario tiene el carnet del grupo 'owner'
         return request.user.groups.contains(groups.owner)
 
-
 class IsReceptionist(permissions.BasePermission):
-    """
-    Guardia de seguridad para las recepcionistas.
-    """
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:
             return False
-
-        # Verifica si el usuario tiene el carnet del grupo 'receptionist'
         return request.user.groups.contains(groups.receptionist)
